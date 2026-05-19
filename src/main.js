@@ -12,14 +12,20 @@ const config = {
   parent: 'game-container',
   backgroundColor: '#000022',
   antialias: true,
+  // Keep audio alive when tab loses focus (important on mobile)
+  disableVisibilityChange: true,
   input: {
     gamepad: true,
+    // Allow touch events to pass through to DOM for the overlay
+    activePointers: 4,
   },
   scale: {
-    mode:            Phaser.Scale.FIT,
-    autoCenter:      Phaser.Scale.CENTER_BOTH,
-    width:           WIDTH,
-    height:          HEIGHT,
+    mode:       Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width:      WIDTH,
+    height:     HEIGHT,
+    // Ensure canvas fills viewport properly on mobile
+    expandParent: true,
   },
   scene: [BootScene, MenuScene, GameScene, HUDScene],
 };

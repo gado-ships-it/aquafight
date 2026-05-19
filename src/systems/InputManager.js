@@ -1,4 +1,9 @@
 import { KEYS } from '../config.js';
+import { TouchController } from './TouchController.js';
+
+function isTouchDevice() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
 
 export class InputManager {
   constructor(scene) {
@@ -16,6 +21,13 @@ export class InputManager {
     });
     this.pad = null;
     this._prevButtons = {};
+
+    // Touch controller (shown on mobile, hidden on desktop)
+    this.touch = new TouchController();
+    if (isTouchDevice()) {
+      this.touch.show();
+    }
+
     scene.input.gamepad.once('connected', pad => { this.pad = pad; });
   }
 
@@ -51,25 +63,31 @@ export class InputManager {
     return Math.abs(v) > 0.2 ? v : 0;
   }
 
-  isLeft()    { return Phaser.Input.Keyboard.JustDown(this.keys.left)    || this._axisLeft() < -0.5; }
-  isRight()   { return Phaser.Input.Keyboard.JustDown(this.keys.right)   || this._axisLeft() > 0.5; }
-  holdLeft()  { return this.keys.left.isDown  || this._axisLeft() < -0.2; }
-  holdRight() { return this.keys.right.isDown || this._axisLeft() > 0.2; }
-  holdUp()    { return this.keys.up.isDown    || this._axisVert() < -0.5; }
-  holdDown()  { return this.keys.down.isDown  || this._axisVert() > 0.5; }
+  isLeft()    { return Phaser.Input.Keyboard.JustDown(this.keys.left)    || this._axisLeft() < -0.5 || this.touch.just.left; }
+  isRight()   { return Phaser.Input.Keyboard.JustDown(this.keys.right)   || this._axisLeft() > 0.5  || this.touch.just.right; }
+  holdLeft()  { return this.keys.left.isDown  || this._axisLeft() < -0.2 || this.touch.state.left; }
+  holdRight() { return this.keys.right.isDown || this._axisLeft() > 0.2  || this.touch.state.right; }
+  holdUp()    { return this.keys.up.isDown    || this._axisVert() < -0.5 || this.touch.state.up; }
+  holdDown()  { return this.keys.down.isDown  || this._axisVert() > 0.5  || this.touch.state.down; }
 
-  justUp()     { return Phaser.Input.Keyboard.JustDown(this.keys.up)     || this._padJustDown(12); }
-  justDown()   { return Phaser.Input.Keyboard.JustDown(this.keys.down)   || this._padJustDown(13); }
-  justLight()  { return Phaser.Input.Keyboard.JustDown(this.keys.light)  || this._padJustDown(0); }
-  justHeavy()  { return Phaser.Input.Keyboard.JustDown(this.keys.heavy)  || this._padJustDown(2); }
-  justSpecial(){ return Phaser.Input.Keyboard.JustDown(this.keys.special)|| this._padJustDown(3); }
-  justGrab()   { return Phaser.Input.Keyboard.JustDown(this.keys.grab)   || this._padJustDown(1); }
-  holdBlock()  { return this.keys.block.isDown || this._padDown(4) || this._padDown(5); }
+  justUp()     { return Phaser.Input.Keyboard.JustDown(this.keys.up)     || this._padJustDown(12) || this.touch.just.up; }
+  justDown()   { return Phaser.Input.Keyboard.JustDown(this.keys.down)   || this._padJustDown(13) || this.touch.just.down; }
+  justLight()  { return Phaser.Input.Keyboard.JustDown(this.keys.light)  || this._padJustDown(0)  || this.touch.just.light; }
+  justHeavy()  { return Phaser.Input.Keyboard.JustDown(this.keys.heavy)  || this._padJustDown(2)  || this.touch.just.heavy; }
+  justSpecial(){ return Phaser.Input.Keyboard.JustDown(this.keys.special)|| this._padJustDown(3)  || this.touch.just.special; }
+  justGrab()   { return Phaser.Input.Keyboard.JustDown(this.keys.grab)   || this._padJustDown(1)  || this.touch.just.grab; }
+  holdBlock()  { return this.keys.block.isDown || this._padDown(4) || this._padDown(5) || this.touch.state.block; }
 
   latchPad() {
     if (!this.pad) return;
     for (let i = 0; i < this.pad.buttons.length; i++) {
       this._prevButtons[i] = this.pad.buttons[i] ? this.pad.buttons[i].pressed : false;
     }
+    // Clear just-pressed touch flags after each game frame
+    this.touch.clearJust();
+  }
+
+  destroy() {
+    this.touch.destroy();
   }
 }

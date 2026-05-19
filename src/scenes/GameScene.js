@@ -381,5 +381,6 @@ export class GameScene extends Phaser.Scene {
     if (this.p1) this.p1.destroy();
     if (this.p2) this.p2.destroy();
     if (this.water) this.water.destroy();
+    if (this.input_mgr) this.input_mgr.destroy();
   }
 }
